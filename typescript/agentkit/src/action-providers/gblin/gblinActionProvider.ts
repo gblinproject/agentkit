@@ -111,8 +111,11 @@ The action reads the quote from the GBLIN Lens and calls buyGBLIN on the vault w
         value: valueWei,
       });
       const receipt = await wallet.waitForTransactionReceipt(txHash);
+      if (receipt?.status === "reverted") {
+        return `Error buying GBLIN: transaction ${txHash} reverted.`;
+      }
 
-      return `Bought GBLIN with ${args.ethAmount} ETH (min out ${formatUnits(minOut, 18)} GBLIN, expected ${formatUnits(expectedOut, 18)}). Tx: ${txHash}\nReceipt: ${JSON.stringify(receipt)}`;
+      return `Bought GBLIN with ${args.ethAmount} ETH (min out ${formatUnits(minOut, 18)} GBLIN, expected ${formatUnits(expectedOut, 18)}). Transaction hash: ${txHash}`;
     } catch (error) {
       return `Error buying GBLIN: ${error}`;
     }
@@ -199,7 +202,10 @@ Note: the vault enforces a 20-second redemption cooldown after a mint for onesel
             args: [GBLIN_ZAP_ADDRESS as Hex, shares],
           }),
         });
-        await wallet.waitForTransactionReceipt(approveHash);
+        const approval = await wallet.waitForTransactionReceipt(approveHash);
+        if (approval?.status === "reverted") {
+          return `Error redeeming GBLIN: approval ${approveHash} reverted.`;
+        }
       }
 
       const data = encodeFunctionData({
@@ -213,8 +219,11 @@ Note: the vault enforces a 20-second redemption cooldown after a mint for onesel
         data,
       });
       const receipt = await wallet.waitForTransactionReceipt(txHash);
+      if (receipt?.status === "reverted") {
+        return `Error redeeming GBLIN: transaction ${txHash} reverted.`;
+      }
 
-      return `Redeemed ${args.gblinAmount} GBLIN for at least ${formatEther(minEthOut)} ETH. Tx: ${txHash}\nReceipt: ${JSON.stringify(receipt)}`;
+      return `Redeemed ${args.gblinAmount} GBLIN for at least ${formatEther(minEthOut)} ETH. Transaction hash: ${txHash}`;
     } catch (error) {
       return `Error redeeming GBLIN: ${error}`;
     }
