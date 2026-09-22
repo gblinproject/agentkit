@@ -10,7 +10,7 @@ import {
 } from "./constants";
 
 const MOCK_TX_HASH = "0xabcdef1234567890";
-const MOCK_RECEIPT = { status: 1, blockNumber: 1234567 };
+const MOCK_RECEIPT = { status: "success", blockNumber: 1234567n };
 const MOCK_ADDRESS = "0x9876543210987654321098765432109876543210";
 const BPS = 10_000n;
 const DEFAULT_SLIPPAGE_BPS = 100n;
@@ -59,6 +59,15 @@ describe("GBLIN Action Provider", () => {
       });
       expect(mockWallet.waitForTransactionReceipt).toHaveBeenCalledWith(MOCK_TX_HASH);
       expect(response).toContain(MOCK_TX_HASH);
+    });
+
+    it("should report a reverted purchase as an error", async () => {
+      mockWallet.readContract
+        .mockResolvedValueOnce(true)
+        .mockResolvedValueOnce([10n ** 16n, 0n, 0n]);
+      mockWallet.waitForTransactionReceipt.mockResolvedValueOnce({ status: "reverted" });
+      const response = await actionProvider.buyGblin(mockWallet, { ethAmount: "0.1" });
+      expect(response).toContain("reverted");
     });
 
     it("should reject a non-positive amount", async () => {
